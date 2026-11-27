@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "Please cite this software and separately cite any external methods used in your research."
+title: "PolicyGraphRAG Workbench"
+type: software
+version: 0.2.0
+date-released: 2026-11-27
+license: MIT
+repository-code: "https://github.com/runzhengzhen/PolicyGraphRAG"
+authors:
+  - name: "PolicyGraphRAG contributors"

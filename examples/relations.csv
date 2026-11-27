@@ -1,0 +1,4 @@
+id,doc_id,title,date,source,source_type,target,target_type,predicate,polarity,stance,quote,text
+r1,demo-rel-1,合成政策关系示例,2025-01-01,作者,actor,人工智能,target,USES,+,A,作者使用人工智能辅助研究。,作者使用人工智能辅助研究。
+r2,demo-rel-1,合成政策关系示例,2025-01-01,作者,actor,人工智能,target,USES,-,B,作者不得使用人工智能生成实验数据。,作者不得使用人工智能生成实验数据。
+r3,demo-rel-2,合成教材支持示例,2026-01-01,出版社,actor,专项资金,tool,USES,+,,出版社使用专项资金支持数字教材。,出版社使用专项资金支持数字教材。
