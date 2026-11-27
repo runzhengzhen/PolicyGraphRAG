@@ -43,18 +43,33 @@ def cosine(a, b):
     return sum(x*y for x, y in zip(a, b)) / norm if norm else 0
 
 
-def retrieve(graph, question, mode="hybrid", top_k=8, hops=2, dense_query=None):
+class RetrievalIndex:
+    """Build lexical indexes and graph adjacency once for repeated queries."""
+    def __init__(self, graph):
+        self.graph = graph
+        self.chunks = {c['id']: c for c in graph['chunks']}
+        self.entities = {e['id']: e for e in graph['entities']}
+        self.sparse = SparseIndex(graph['chunks'])
+        self.global_index = SparseIndex(graph['communities'], 'summary')
+        self.community_by_id = {c['id']: c for c in graph['communities']}
+        self.adjacency = defaultdict(set)
+        for edge in graph['edges']:
+            self.adjacency[edge['source']].add(edge['target'])
+            self.adjacency[edge['target']].add(edge['source'])
+
+    def search(self, question, mode='hybrid', top_k=8, hops=2, dense_query=None):
+        return retrieve(self.graph, question, mode, top_k, hops, dense_query, _index=self)
+
+
+def retrieve(graph, question, mode="hybrid", top_k=8, hops=2, dense_query=None, _index=None):
     if top_k < 1 or not 0 <= hops <= 4:
         raise ValueError("top_k >= 1, hops between 0 and 4 required")
-    chunks = {c["id"]: c for c in graph["chunks"]}
-    entities = {e["id"]: e for e in graph["entities"]}
+    index = _index or RetrievalIndex(graph)
+    chunks, entities = index.chunks, index.entities
     normalized_question = canonical(question)
     seeds = {e["id"] for e in entities.values() if any(canonical(name) in normalized_question for name in [e["name"]] + e["aliases"] if name)}
-    sparse = SparseIndex(list(chunks.values())).search(question, top_k * 3)
-    adjacency = defaultdict(set)
-    for edge in graph["edges"]:
-        adjacency[edge["source"]].add(edge["target"])
-        adjacency[edge["target"]].add(edge["source"])
+    sparse = index.sparse.search(question, top_k * 3)
+    adjacency = index.adjacency
     distances = {node: 0 for node in seeds}
     queue = deque(sorted(seeds))
     while queue:
@@ -73,8 +88,8 @@ def retrieve(graph, question, mode="hybrid", top_k=8, hops=2, dense_query=None):
             local.append({"id": chunk["id"], "score": score})
     local = sorted(local, key=lambda r: (-r["score"], r["id"]))[:top_k * 3]
     # Rank every community; map each selected report to its supporting chunks.
-    global_hits = SparseIndex(graph["communities"], "summary").search(question, top_k)
-    community_by_id = {c["id"]: c for c in graph["communities"]}
+    global_hits = index.global_index.search(question, top_k)
+    community_by_id = index.community_by_id
     global_scores = defaultdict(float)
     sparse_rank = {row["id"]: i for i, row in enumerate(sparse)}
     for rank, hit in enumerate(global_hits):

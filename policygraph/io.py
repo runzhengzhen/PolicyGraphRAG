@@ -68,8 +68,21 @@ def load_corpus(path, namespace=None):
         document = {"id": doc_id, "title": title, "namespace": namespace,
                     "date": str(row.get("date") or row.get("发布日期") or ""),
                     "source": str(path), "native_id": str(native_id)}
+        metadata = row.get("metadata", {})
+        if not isinstance(metadata, dict) or any(not isinstance(k, str) for k in metadata):
+            raise ValueError("metadata must be an object with string keys")
+        document["metadata"] = dict(metadata)
         if doc_id in documents and documents[doc_id]["title"] != title:
             raise ValueError("Conflicting titles for doc_id %s" % doc_id)
+        if doc_id in documents:
+            previous = documents[doc_id]
+            if previous['date'] and document['date'] and previous['date'] != document['date']:
+                raise ValueError("Conflicting dates for doc_id %s" % doc_id)
+            document['date'] = document['date'] or previous['date']
+            for field, value in previous.get('metadata', {}).items():
+                if field in metadata and metadata[field] != value:
+                    raise ValueError("Conflicting metadata for doc_id %s: %s" % (doc_id, field))
+                document['metadata'].setdefault(field, value)
         documents[doc_id] = document
         units.append({"doc_id": doc_id, "unit_key": unit_key, "text": text,
                       "source_line": row.get("source_line"),
@@ -128,7 +141,8 @@ def adapt_gtflow(directory, output):
         meta = segment.get("meta") or {}
         rows.append({"doc_id": str(meta.get("source_id") or seg_id), "id": seg_id,
                      "title": str(meta.get("journal") or meta.get("source_id") or seg_id),
-                     "text": segment["text"], "codes": coding.get(seg_id, [])})
+                     "date": str(meta.get('date') or meta.get('发布日期') or ''),
+                     "metadata": dict(meta), "text": segment["text"], "codes": coding.get(seg_id, [])})
     triples_path = directory / "axial_triples.json"
     unresolved_triples = []
     if triples_path.exists():

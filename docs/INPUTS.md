@@ -4,6 +4,8 @@
 
 每行是一个对象，必需 `text`，推荐 `id,title,date`。同一文档的多个段落可使用 `doc_id,para_id`。`date` 使用显式研究日期；不从正文年份或文件修改时间猜测。
 
+`metadata` 接受研究者提供的对象，例如 `{"cohort":"A","country":"CN"}`。同一政策跨段落的非空日期与同名 metadata 字段需一致；分组比较使用指定字段中的字符串标签。
+
 `source_file,source_line` 可用于保留来源位置。图内 `start,end` 相对于输入记录的原始 `text`，采用 Python 字符索引；不是 PDF 页码。
 
 `codes` 可提供 `code,evidence_span`；只有 `evidence_span` 能逐字在块中匹配时才作为研究编码证据。研究编码实体的类型为 `research_code`，不冒充政策主体。

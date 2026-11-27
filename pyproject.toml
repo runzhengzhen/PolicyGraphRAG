@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "policy-graphrag-workbench"
-version = "0.2.0"
+version = "0.3.0"
 description = "Local-first policy graph analysis, evidence retrieval and research visualization"
 readme = "README.md"
 license = "MIT"
@@ -32,4 +32,3 @@ Issues = "https://github.com/runzhengzhen/PolicyGraphRAG/issues"
 
 [tool.setuptools.packages.find]
 include = ["policygraph*"]
-

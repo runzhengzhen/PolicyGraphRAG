@@ -1,16 +1,19 @@
 """Build a source ZIP using only the reviewed public file set."""
 import hashlib
 import json
+import sys
 import zipfile
 from pathlib import Path
 from check_release import ROOT, inspect_artifact, source_files
+sys.path.insert(0, str(ROOT))
+from policygraph import __version__
 
 
 def main():
     files, problems = source_files()
     if problems:
         raise RuntimeError(json.dumps(problems, ensure_ascii=False))
-    version = '0.2.0'
+    version = __version__
     prefix = 'policy-graphrag-workbench-' + version
     manifest = {'version': version, 'license': 'MIT', 'files': [
         {'path': p.relative_to(ROOT).as_posix(), 'bytes': p.stat().st_size,

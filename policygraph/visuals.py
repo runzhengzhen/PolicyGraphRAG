@@ -32,6 +32,30 @@ def bars(title, rows, axis, note):
     return document(title, body, height=height, note=note)
 
 
+def comparison_svg(comparison, top_n=18):
+    """Two prevalence estimates and Wilson 95% intervals per entity."""
+    rows = comparison['rows'][:top_n]
+    height = max(280, 170 + 50*len(rows))
+    body = '<text x="260" y="76" font-size="13">%s（绿） / %s（红） · 文档覆盖率与Wilson 95%%区间</text>' % (
+        esc(comparison['left']), esc(comparison['right']))
+    for tick in (0, 0.25, 0.5, 0.75, 1):
+        x = 260+tick*640
+        body += '<path d="M%s 98 L%s %s" stroke="#e5ecec"/><text x="%s" y="94" text-anchor="middle" font-size="10">%s%%</text>' % (
+            x, x, max(115, 120+50*len(rows)), x, int(tick*100))
+    for i, row in enumerate(rows):
+        y = 108 + 50*i
+        body += '<text x="240" y="%s" text-anchor="end" font-size="13">%s</text>' % (y+6, esc(row['name'][:28]))
+        for offset, prefix, color in [(-5, 'left', '#2b827c'), (10, 'right', '#ac4b45')]:
+            low, high = row[prefix+'_wilson95']
+            body += ('<path d="M%.2f %s L%.2f %s" stroke="%s" stroke-width="2"/>'
+                     '<circle cx="%.2f" cy="%s" r="4" fill="%s"/><text x="925" y="%s" font-size="12">%s/%s</text>') % (
+                         260+low*640, y+offset, 260+high*640, y+offset, color,
+                         260+row[prefix+'_rate']*640, y+offset, color, y+offset+4,
+                         row[prefix+'_count'], row[prefix+'_n'])
+    return document('政策分组实体覆盖比较', body, height=height,
+                    note='按覆盖率差值绝对值排序；同篇政策内多次提及按一次计数。')
+
+
 def graph_svg(graph, top_n=18):
     if not 2 <= top_n <= 60:
         raise ValueError('top_n must be between 2 and 60')

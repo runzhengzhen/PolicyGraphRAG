@@ -6,6 +6,8 @@
 
 从政策文本提取带原文位置的实体候选，构建可追溯图谱，组合文本、实体邻域与社区检索，并生成证据报告、研究图表和标准网络文件。支持研究者已有编码与关系表接入，研究分析可通过六个 Skills 组合。
 
+0.3.0 增加研究工作流：语料质量检查、有向与正负关系网络、分组统计比较、主题一致性和检索消融评测。
+
 ## 快速开始
 
 克隆仓库并运行：
@@ -18,7 +20,7 @@ sh run_demo.sh
 python3 -m unittest discover -s tests -v
 ```
 
-结果位于 `outputs/demo/`：`evidence-report.html`、`figures/*.svg` 和 `network/network.graphml`、`network/network.gexf`。`outputs/relations/` 展示已有关系表的导入、构图和制图。所有演示政策均为合成文本。
+结果位于 `outputs/demo/`：`evidence-report.html`、`figures/*.svg` 和 `network/network.graphml`、`network/network.gexf`。`outputs/relations/` 展示已有关系表的接入，`outputs/research-study/study.html` 汇集质量检查、分组比较和检索评测。所有演示政策均为合成文本。
 
 需要安装命令行入口时：
 
@@ -33,6 +35,16 @@ policygraph --help
 python3 -m pip install '.[graph]'
 policygraph build --input examples/policies.jsonl --output outputs/leiden --community leiden
 ```
+
+## 一条命令完成研究工作流
+
+```sh
+policygraph study --input examples/research-policies.jsonl --output outputs/my-study --namespace study --group-field cohort --left A --right B --queries examples/retrieval-judgments.jsonl --k 3
+```
+
+打开 `outputs/my-study/study.html` 查看结果。工作流生成证据图谱、重复与模板检查、显式关系指标、分组覆盖率和 Wilson 区间、Fisher 检验与 BH 校正、社区实体 NPMI、四种检索模式的 Recall／MRR／nDCG，以及可校验的运行清单。再次运行复用内容缓存。
+
+`metadata` 保存研究分组，`relevance` 保存检索问题的相关性标注。输入格式、独立命令和统计口径见 [研究工作流](docs/RESEARCH.md)。从本地研究资产提炼的能力见 [能力整合记录](docs/CAPABILITY_INTEGRATION.md)。
 
 ## 分析自己的语料
 
@@ -69,6 +81,8 @@ GTFlow 导入器核对段落与证据编号。关系表导入保留方向、极�
 - `hybrid`：RRF 融合可用通道。
 
 PageRank 与 Leiden 使用无向加权共现投影；显式关系另行保留方向和标签。`path` 返回带证据的图关联路径。内容缓存复用抽取、向量和摘要，图投影及社区发现全量重算。
+
+批量查询可用 Python API `RetrievalIndex(graph).search(...)`，多次查询共用文本索引、社区索引与邻接表。`evaluate` 对四种离线检索模式按政策去重评测，索引构建耗时单独记录。
 
 已有完整本地 SentenceTransformer 模型时，可安装 `.[local-models]`，用 `build --local-embedding-model /path/to/model` 编码，再用 `query --dense-query` 检索。只接受本地目录，不自动下载模型。显式 `--llm-model` / `--embedding-model` 才启用在线接口，环境变量名见 `.env.example`；程序不会自动加载该文件。
 
